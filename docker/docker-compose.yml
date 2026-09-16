@@ -1,0 +1,77 @@
+# docker-compose.yml - Prefect orchestration platform
+services:
+
+    # minio object storage
+    minio:
+        image: quay.io/minio/minio:latest
+        container_name: minio
+        entrypoint: ["minio", "server", "--address", "0.0.0.0:9000", "--console-address", "0.0.0.0:9001", "/data"]
+        ports:
+          - "9000:9000" #s3 API port
+          - "9001:9001" # Web Console port
+        volumes:
+          - minio_data:/data
+        networks:
+          - prefect-net
+        restart: unless-stopped
+        env_file:
+          - ./env/.env.minio
+
+
+    # prefect architecture
+    postgres:
+        image: postgres:16
+        container_name: postgres
+        env_file:
+          - ./env/.env.postgres
+        volumes:
+          - pgdata:/var/lib/postgresql/data
+        networks:
+          - prefect-net
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U prefect"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    prefect-server:
+        image: prefecthq/prefect:2-python3.12
+        container_name: prefect-server
+        command: prefect server start --host 0.0.0.0
+        depends_on:
+            postgres:
+                condition: service_healthy
+        env_file:
+          - ./env/.env.postgres
+        environment:
+            PREFECT_SERVER_API_HOST: 0.0.0.0
+        ports:
+            # Prefect UI and API
+          - "4200:4200"
+        networks:
+          - prefect-net
+
+    worker:
+        build:
+            context: ..
+            dockerfile: docker/data_pipeline/Dockerfile
+        container_name: prefect-worker
+        depends_on:
+          - prefect-server
+        environment:
+            PREFECT_API_URL: http://prefect-server:4200/api
+        command: prefect worker start --pool default-agent-pool --type process
+        volumes:
+            # Mount flow code so changes are reflected without rebuilding
+          - ../data_pipeline:/app/data_pipeline
+        networks:
+          - prefect-net
+        restart: unless-stopped
+
+volumes:
+    pgdata:
+    minio_data:
+
+networks:
+    prefect-net:
+        driver: bridge

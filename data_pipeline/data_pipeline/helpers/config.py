@@ -1,0 +1,19 @@
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class Settings(BaseSettings):
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    endpoint_url: str
+    bucket_name: str
+    file_allowed_types: list
+
+    model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
+
+
+def get_settings():
+    return Settings()
