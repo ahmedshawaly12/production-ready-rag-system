@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     endpoint_url: str
     bucket_name: str
     file_allowed_types: list
+    chunk_size: int = 250
+    chunk_overlap: int = 50
 
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
 

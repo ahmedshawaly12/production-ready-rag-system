@@ -320,6 +320,7 @@ dependencies = [
     { name = "boto3" },
     { name = "langchain" },
     { name = "langchain-community" },
+    { name = "langchain-text-splitters" },
     { name = "pymupdf" },
     { name = "shared" },
 ]
@@ -332,9 +333,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boto3", extras = ["s3"], specifier = ">=1.43.95" },
+    { name = "boto3", specifier = ">=1.43.95" },
     { name = "langchain", specifier = ">=1.4.0" },
     { name = "langchain-community", specifier = ">=0.4.2" },
+    { name = "langchain-text-splitters", specifier = ">=1.1.2" },
     { name = "pymupdf", specifier = ">=1.28.2" },
     { name = "shared", editable = "shared" },
 ]
