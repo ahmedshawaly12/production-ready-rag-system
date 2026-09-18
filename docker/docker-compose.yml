@@ -1,6 +1,26 @@
 # docker-compose.yml - Prefect orchestration platform
 services:
 
+    # litellm
+    litellm:
+        image: docker.litellm.ai/berriai/litellm:main-latest
+        container_name: litellm
+        ports:
+          - "4000:4000"
+        env_file:
+          - ./env/.env.litellm
+        restart: unless-stopped
+        networks:
+          - backend
+        volumes:
+          - ./litellm_proxy/config.yml:/app/config.yml
+        command: ["--config", "/app/config.yml", "--port", "4000"]
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+
+
     # minio object storage
     minio:
         image: quay.io/minio/minio:latest
@@ -13,6 +33,7 @@ services:
           - minio_data:/data
         networks:
           - prefect-net
+          - backend
         restart: unless-stopped
         env_file:
           - ./env/.env.minio
@@ -28,6 +49,7 @@ services:
           - pgdata:/var/lib/postgresql/data
         networks:
           - prefect-net
+          - backend
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U prefect"]
             interval: 10s
@@ -73,5 +95,6 @@ volumes:
     minio_data:
 
 networks:
+    backend:
     prefect-net:
         driver: bridge
