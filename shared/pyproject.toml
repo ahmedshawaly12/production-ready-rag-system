@@ -5,4 +5,13 @@ description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "openai>=3.14.1",
+    "qdrant-client>=1.19.1",
 ]
+
+
+[tool.ruff.lint.pylint]
+max-args = 8
+max-positional-args = 8
+
+[tool.ruff.lint]
+ignore = ["BLE001"]
