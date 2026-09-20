@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-class Settings(BaseSettings):
+class DataPipelineSettings(BaseSettings):
     aws_access_key_id: str
     aws_secret_access_key: str
     endpoint_url: str
@@ -18,4 +18,4 @@ class Settings(BaseSettings):
 
 
 def get_settings():
-    return Settings()
+    return DataPipelineSettings()

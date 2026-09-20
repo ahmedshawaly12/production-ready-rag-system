@@ -3,7 +3,6 @@ from pathlib import PurePosixPath
 
 from botocore.client import BaseClient
 
-from data_pipeline.extract.extractors import extract_pdf_text
 from data_pipeline.helpers.config import get_settings
 from data_pipeline.helpers.utils import (
     download_bytes,
@@ -13,6 +12,7 @@ from data_pipeline.helpers.utils import (
     move_file,
     upload_bytes,
 )
+from data_pipeline.parse.extractors import extract_pdf_text
 
 settings = get_settings()
 
