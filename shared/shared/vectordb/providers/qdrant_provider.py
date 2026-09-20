@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Sequence
+from uuid import NAMESPACE_DNS, uuid5
 
 from qdrant_client import QdrantClient, models
 
@@ -119,7 +120,7 @@ class QdrantProvider(VectorDBInterface):
 
         points = [
             models.PointStruct(
-                id=record_id,
+                id=str(uuid5(NAMESPACE_DNS, record_id)),
                 vector=vector,
                 payload={"text": text, "metadata": meta},
             )
