@@ -4,11 +4,11 @@ version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
     "shared",
-    "boto3>=1.43.95",
     "langchain>=1.4.0",
-    "langchain-community>=0.4.2",
     "pymupdf>=1.28.2",
     "langchain-text-splitters>=1.1.2",
+    "boto3>=1.43.99",
+    "prefect>=3.8.6",
 ]
 
 
@@ -20,6 +20,5 @@ lint.ignore=["PTH"]
 
 [dependency-groups]
 dev = [
-    "arabic-reshaper>=3.0.1",
-    "python-bidi>=0.6.11",
+    "prefect>=3.8.6",
 ]
