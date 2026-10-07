@@ -110,7 +110,7 @@ class QdrantProvider(VectorDBInterface):
         vectors: Sequence[list],
         metadata: Sequence[dict],
         record_ids: Sequence[str],
-        batch_size: int = 50,
+        batch_size: int = 150,
     ) -> bool:
         if not await self.is_collection_exist(collection_name):
             self.logger.warning(
