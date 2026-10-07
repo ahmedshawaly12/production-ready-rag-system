@@ -38,6 +38,7 @@ async def index_into_vectordb(
     chuncks: list[dict],
 ):
     logger = get_run_logger()
+    embedding_model = get_embedding_model()
 
     if not chuncks:
         logger.warning(f"No chuncks to index into collection: {collection_name}")
@@ -52,7 +53,7 @@ async def index_into_vectordb(
 
     logger.info(f"Generating embeddingds for {len(texts)} chuncks")
 
-    vectors = get_embedding_model().embed_text(texts)
+    vectors = await embedding_model.embed_text(texts)
     record_ids = [
         f"page_{c['metadata']['page']}_id_{c['metadata']['chunck_id']}" for c in chuncks
     ]

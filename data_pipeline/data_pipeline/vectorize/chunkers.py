@@ -42,6 +42,6 @@ async def chunck_pages(pages: list[dict], source: str) -> list[dict]:
                 }
             )
 
-        logger.info(f"Finished chunking {source}: {len(chuncks)} chunk(s) created")
+    logger.info(f"Finished chunking {source}: {len(chuncks)} chunk(s) created")
 
-        return chuncks
+    return chuncks
