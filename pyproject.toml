@@ -11,4 +11,5 @@ dependencies = [
 members = [
     "data_pipeline",
     "shared",
+    "api",
 ]
