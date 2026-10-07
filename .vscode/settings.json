@@ -1,0 +1,7 @@
+{
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/shared",
+    "${workspaceFolder}/api",
+    "${workspaceFolder}/data_pipeline"
+  ]
+}
