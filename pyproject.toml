@@ -14,3 +14,19 @@ members = [
     "shared",
     "api",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "pytest-cov",
+    "pytest-mock",
+    "httpx",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["api/tests", "data_pipeline/tests", "shared/tests"]
+asyncio_mode = "auto"
+addopts = "-ra --import-mode=importlib"
+markers = ["integration: needs real services (Qdrant, LLM, S3)"]
+asyncio_default_fixture_loop_scope = "function"
