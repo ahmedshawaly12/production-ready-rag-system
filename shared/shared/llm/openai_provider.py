@@ -175,7 +175,7 @@ class OpenAIProvider(LLMInterface):
         )
 
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.generation_model_id,
                 max_tokens=max_output_tokens,
                 temperature=temperature,
