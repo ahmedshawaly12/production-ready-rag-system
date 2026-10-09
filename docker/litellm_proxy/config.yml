@@ -1,17 +1,17 @@
 model_list:
-  - model_name: "cohere-embed"
+  - model_name: "cohere/embed-multilingual-v3.0"
     litellm_params:
         model: "cohere/embed-multilingual-v3.0"
         api_key: "os.environ/COHERE_API_KEY"
         rpm: 10
 
-  - model_name: "groq-qwen"
+  - model_name: "qwen/qwen3.8-27b"
     litellm_params:
         model: "groq/qwen/qwen3.8-27b"
         api_key: "os.environ/GROQ_API_KEY"
         rpm: 20
 
-  - model_name: "cohere-command"
+  - model_name: "cohere/command-r-08-2024"
     litellm_params:
         model: "cohere/command-r-08-2024"
         api_key: "os.environ/COHERE_API_KEY"
