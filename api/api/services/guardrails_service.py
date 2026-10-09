@@ -22,6 +22,11 @@ class GuardrailsService:
                 replacement="[EMAIL]",
             ),
             GuardrailPattern(
+                name="credit_card",
+                pattern=re.compile(r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)"),
+                replacement="[POSSIBLE_CARD_NUMBER]",
+            ),
+            GuardrailPattern(
                 name="phone",
                 pattern=re.compile(
                     r"(?<!\w)(?:\+\d{1,3}[\s.-]?)?"
@@ -49,11 +54,6 @@ class GuardrailsService:
                     r"""("[^"]*"|'[^']*'|[^\s,;]+)"""
                 ),
                 replacement=None,  # Constructed below per match.
-            ),
-            GuardrailPattern(
-                name="credit_card",
-                pattern=re.compile(r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)"),
-                replacement="[POSSIBLE_CARD_NUMBER]",
             ),
         ]
 
