@@ -23,7 +23,3 @@ class LLMInterface(ABC):
     @abstractmethod
     def embed_text(self, text: str):
         pass
-
-    @abstractmethod
-    def construct_prompt(self, prompt: str, role: str):
-        pass

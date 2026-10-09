@@ -4,10 +4,25 @@ import random
 import time
 from collections import deque
 from collections.abc import AsyncGenerator
+from dataclasses import dataclass, field
 
 from openai import AsyncOpenAI, RateLimitError
 
 from shared.llm.llm_interface import LLMInterface
+
+
+@dataclass
+class StreamChunck:
+    content: str | None = None
+    usage: str | None = None
+    model: str | None = None
+
+
+@dataclass
+class EmbeddingResult:
+    vectors: list[list[float]] = field(default_factory=list)
+    model: str | None = None  # real model that produced the vectors
+    prompt_tokens: int = 0
 
 
 class OpenAIProvider(LLMInterface):
@@ -88,7 +103,7 @@ class OpenAIProvider(LLMInterface):
         self.logger.error(f"Embedding failed after {max_retries} retries")
         return None
 
-    async def embed_text(self, text: str | list[str], batch_size: int = 32):
+    async def embed_text_with_meta(self, text: str | list[str], batch_size: int = 32):
         if not self.client:
             self.logger.error("LLM provider client wasn't set")
             return None
@@ -100,7 +115,9 @@ class OpenAIProvider(LLMInterface):
         if isinstance(text, str):
             text = [text]
 
-        all_embeddings = []
+        vectors = []
+        model_name = ""
+        prompt_tokens = 0
 
         for i in range(0, len(text), batch_size):
             batch = text[i : i + batch_size]
@@ -116,17 +133,27 @@ class OpenAIProvider(LLMInterface):
                 self.logger.error("Error while embedding the text batch")
                 return None
 
-            all_embeddings.extend([res.embedding for res in response.data])
+            vectors.extend([res.embedding for res in response.data])
+            if response.model:
+                model_name = response.model
+            if response.usage:
+                prompt_tokens += response.usage.prompt_tokens or 0
 
-        return all_embeddings
+        return EmbeddingResult(
+            vectors=vectors, model=model_name, prompt_tokens=prompt_tokens
+        )
+
+    async def embed_text(self, text: str | list[str], batch_size: int = 32):
+        """Backward compatible: returns just the vectors (or None on failure)."""
+        result = await self.embed_text_with_meta(text, batch_size)
+        return result.vectors if result else None
 
     def process_text(self, text: str):
         return text[: self.default_max_input_tokens].strip()
 
     async def generate_text(
         self,
-        prompt: str,
-        chat_history: list | None = None,
+        messages: list[dict],
         max_output_tokens: int | None = None,
         temperature: float | None = None,
     ):
@@ -138,19 +165,21 @@ class OpenAIProvider(LLMInterface):
             self.logger.error("Generation model wasn't set")
             return None
 
-        if chat_history is None:
-            chat_history = []
-
-        temperature = temperature or self.default_temperature
-        max_output_tokens = max_output_tokens or self.default_max_output_tokens
-        chat_history.append(self.construct_prompt(self.process_text(prompt), "user"))
+        temperature = (
+            temperature if temperature is not None else self.default_temperature
+        )
+        max_output_tokens = (
+            max_output_tokens
+            if max_output_tokens is not None
+            else self.default_max_output_tokens
+        )
 
         try:
             response = self.client.chat.completions.create(
                 model=self.generation_model_id,
                 max_tokens=max_output_tokens,
                 temperature=temperature,
-                messages=chat_history,
+                messages=messages,
             )
         except RateLimitError:
             self.logger.exception("Rate limit exceeded during generation")
@@ -165,15 +194,15 @@ class OpenAIProvider(LLMInterface):
             self.logger.error("Error while generating the response")
             return None
 
+        self.actual_gen_model_name = response.model
         return response.choices[0].message.content
 
     async def stream_generate_text(
         self,
-        prompt: str,
-        chat_history: list | None = None,
+        messages: list[dict],
         max_output_tokens: int | None = None,
         temperature: float | None = None,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[StreamChunck]:
         if not self.client:
             self.logger.error("LLM provider client wasn't set")
             return
@@ -182,33 +211,40 @@ class OpenAIProvider(LLMInterface):
             self.logger.error("Generation model wasn't set")
             return
 
-        if chat_history is None:
-            chat_history = []
-
-        temperature = temperature or self.default_temperature
-        max_output_tokens = max_output_tokens or self.default_max_output_tokens
-        chat_history.append(self.construct_prompt(self.process_text(prompt), "user"))
+        temperature = (
+            temperature if temperature is not None else self.default_temperature
+        )
+        max_output_tokens = (
+            max_output_tokens
+            if max_output_tokens is not None
+            else self.default_max_output_tokens
+        )
 
         try:
             stream = await self.client.chat.completions.create(
                 model=self.generation_model_id,
                 max_tokens=max_output_tokens,
                 temperature=temperature,
-                messages=chat_history,
+                messages=messages,
                 stream=True,
+                stream_options={"include_usage": True},
             )
             async for chunk in stream:
+                if chunk.usage:
+                    yield StreamChunck(
+                        usage={
+                            "prompt_tokens": chunk.usage.prompt_tokens,
+                            "completion_tokens": chunk.usage.completion_tokens,
+                            "total_tokens": chunk.usage.total_tokens,
+                        },
+                        model=chunk.model,
+                    )
                 if not chunk.choices:
                     continue
 
                 delta = chunk.choices[0].delta
-
-                if not delta:
-                    continue
-
-                content = delta.content
-                if content:
-                    yield content
+                if delta and delta.content:
+                    yield StreamChunck(content=delta.content, model=chunk.model)
 
         except RateLimitError:
             self.logger.exception("Rate limit exceeded during streaming generation")
@@ -221,6 +257,3 @@ class OpenAIProvider(LLMInterface):
         except Exception:
             self.logger.exception("Error while streaming generation")
             return
-
-    def construct_prompt(self, prompt: str, role):
-        return {"role": role, "content": prompt}
