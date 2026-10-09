@@ -3,6 +3,7 @@ name = "rag-system"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "langfuse>=4.17.0",
     "pre-commit>=4.6.2",
     "pydantic-settings>=2.15.0",
 ]
