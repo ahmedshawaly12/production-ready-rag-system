@@ -1,10 +1,15 @@
-from redis.asyncio import Redis
-
-from api.helpers.config import get_settings
-
-
-def get_redis_client() -> Redis:
-    settings = get_settings()
-    return Redis(
-        host=settings.REDIS_HOST, port=settings.REDIS_PORT, decode_responses=True
-    )
+def serialize_documents(documents) -> list[dict]:
+    result = []
+    for document in documents:
+        metadata = document.metadata or {}
+        result.append(
+            {
+                "score": document.score,
+                "text": document.text,
+                "metadata": {
+                    "source": metadata.get("source"),
+                    "page": metadata.get("page"),
+                },
+            }
+        )
+    return result
