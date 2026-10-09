@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     CACHE_DISTANCE_THRESHOLD: float
     CACHE_TTL: int
 
+    LANGFUSE_SECRET_KEY: str
+    LANGFUSE_PUBLIC_KEY: str
+    LANGFUSE_BASE_URL: str
+
+    PROMPT_NAME: str
+    MIN_RETRIEVAL_SCORE: float
+
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
 
 
