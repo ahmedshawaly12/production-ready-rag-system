@@ -72,11 +72,12 @@ async def chat(
     rag_service: RAGService = Depends(_get_rag_service),
     semantic_cache_service: SemanticCacheService = Depends(_get_cache_service),
 ):
-    question = chat_payload.question
-
     settings = request.app.state.settings
     langfuse = request.app.state.langfuse
     prompt_manager = request.app.state.prompt_manager
+    guardrails_service = request.app.state.guardrails_service
+
+    question = guardrails_service.mask_input(chat_payload.question)
 
     # Later these will come from the authenticated user request.
     user_id = "dummy_user_123"

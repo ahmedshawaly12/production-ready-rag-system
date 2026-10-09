@@ -11,6 +11,7 @@ from api.helpers.config import get_settings
 from api.routes.chat import chat_route
 from api.routes.health import health_route
 from api.services.caching_service import SemanticCacheService
+from api.services.guardrails_service import GuardrailsService
 from api.services.rag_service import RAGService
 
 
@@ -52,11 +53,14 @@ async def lifespan(app: FastAPI):
             generation_client=generation_model,
         )
 
+        guardrails_service = GuardrailsService()
+
         app.state.settings = settings
         app.state.langfuse = langfuse
         app.state.prompt_manager = prompt_manager
         app.state.rag_service = rag_service
         app.state.cache_service = cache_service
+        app.state.guardrails_service = guardrails_service
 
         yield
 
