@@ -1,0 +1,31 @@
+[project]
+name = "data-pipeline"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "shared",
+    "langchain>=1.4.0",
+    "pymupdf>=1.28.2",
+    "langchain-text-splitters>=1.1.2",
+    "boto3>=1.43.99",
+    "prefect>=3.8.6",
+]
+
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["data_pipeline*"]
+
+[tool.uv.sources]
+shared = { workspace = true }
+
+[tool.ruff]
+lint.ignore=["PTH"]
+
+[dependency-groups]
+dev = [
+    "prefect>=3.8.6",
+]

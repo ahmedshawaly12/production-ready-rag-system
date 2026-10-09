@@ -3,5 +3,30 @@ name = "rag-system"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "langfuse>=4.17.0",
     "pre-commit>=4.6.2",
+    "pydantic-settings>=2.15.0",
 ]
+
+[tool.uv.workspace]
+members = [
+    "data_pipeline",
+    "shared",
+    "api",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "pytest-cov",
+    "pytest-mock",
+    "httpx",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["api/tests", "data_pipeline/tests", "shared/tests"]
+asyncio_mode = "auto"
+addopts = "-ra --import-mode=importlib"
+markers = ["integration: needs real services (Qdrant, LLM, S3)"]
+asyncio_default_fixture_loop_scope = "function"

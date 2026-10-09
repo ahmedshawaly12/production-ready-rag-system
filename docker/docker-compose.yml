@@ -1,0 +1,129 @@
+services:
+
+    # litellm
+    litellm:
+        image: docker.litellm.ai/berriai/litellm:main-latest
+        container_name: litellm
+        ports:
+          - "4000:4000"
+        env_file:
+          - ./env/.env.litellm
+        restart: unless-stopped
+        networks:
+          - backend
+          - prefect-net
+        volumes:
+          - ./litellm_proxy/config.yml:/app/config.yml
+        command: ["--config", "/app/config.yml", "--port", "4000"]
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+    # Qdrant
+    qdrant:
+        image: qdrant/qdrant:v1.13.6
+        container_name: qdrant
+        ports:
+          - "6333:6333"
+          - "6334:6334"
+        volumes:
+          - qdrant_data:/qdrant/storage
+        networks:
+          - backend
+          - prefect-net
+        restart: unless-stopped
+
+
+    # redis
+    redis:
+        image: redis/redis-stack:latest
+        container_name: redis
+        ports:
+          - "6379:6379"
+          - "8001:8001" # RedisInsight for development
+        volumes:
+          - redis_data:/data
+        networks:
+          - backend
+        restart: unless-stopped
+
+
+    # minio object storage
+    minio:
+        image: quay.io/minio/minio:latest
+        container_name: minio
+        entrypoint: ["minio", "server", "--address", "0.0.0.0:9000", "--console-address", "0.0.0.0:9001", "/data"]
+        ports:
+          - "9000:9000" #s3 API port
+          - "9001:9001" # Web Console port
+        volumes:
+          - minio_data:/data
+        networks:
+          - prefect-net
+          - backend
+        restart: unless-stopped
+        env_file:
+          - ./env/.env.minio
+
+
+    # prefect architecture
+    postgres:
+        image: postgres:16
+        container_name: postgres
+        env_file:
+          - ./env/.env.postgres
+        volumes:
+          - pgdata:/var/lib/postgresql/data
+        networks:
+          - prefect-net
+          - backend
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U prefect"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    prefect-server:
+        image: prefecthq/prefect:3-python3.13
+        container_name: prefect-server
+        command: prefect server start --host 0.0.0.0
+        depends_on:
+            postgres:
+                condition: service_healthy
+        env_file:
+          - ./env/.env.postgres
+        environment:
+            PREFECT_SERVER_API_HOST: 0.0.0.0
+        ports:
+            # Prefect UI and API
+          - "4200:4200"
+        networks:
+          - prefect-net
+
+    worker:
+        build:
+            context: ..
+            dockerfile: docker/data_pipeline/Dockerfile
+        container_name: prefect-worker
+        depends_on:
+          - prefect-server
+        environment:
+            PREFECT_API_URL: http://prefect-server:4200/api
+        command: prefect worker start --pool default-agent-pool --type process
+        # volumes:
+            # Mount flow code so changes are reflected without rebuilding
+          #- ../data_pipeline:/app/data_pipeline
+        networks:
+          - prefect-net
+        restart: unless-stopped
+
+volumes:
+    pgdata:
+    minio_data:
+    qdrant_data:
+    redis_data:
+
+networks:
+    backend:
+    prefect-net:
+        driver: bridge

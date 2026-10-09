@@ -1,0 +1,26 @@
+[project]
+name = "shared"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "openai>=3.14.1",
+    "qdrant-client>=1.19.1",
+]
+
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["shared*"]
+
+
+
+[tool.ruff.lint.pylint]
+max-args = 8
+max-positional-args = 8
+
+[tool.ruff.lint]
+ignore = ["BLE001"]
