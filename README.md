@@ -30,27 +30,54 @@ This is a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/
 
 ```
 .
-├── api/                  # FastAPI app: /chat and /health
+├── api/                              # FastAPI app: /chat and /health
 │   ├── api/
-│   │   ├── routes/       # HTTP endpoints and request schemas
-│   │   ├── services/     # RAG, semantic cache, guardrails
-│   │   ├── helpers/      # config, prompt building, utils
-│   │   └── main.py       # app + lifespan wiring
-│   └── tests/
-├── data_pipeline/        # Prefect flows
-│   └── data_pipeline/
-│       ├── parse/        # extract text from source files
-│       ├── vectorize/    # chunk, embed, write to Qdrant, reindex
-│       ├── data_ingestion_pipeline.py
-│       └── deploy.py
-├── shared/               # code used by both packages
-│   └── shared/
-│       ├── llm/          # LLM and embedding clients
-│       ├── prompts/      # Langfuse prompt manager
-│       └── vectordb/     # vector DB interface + Qdrant provider
-├── docker/               # Compose stack, Dockerfiles, nginx, Prometheus
-├── pyproject.toml        # workspace root
-└── uv.lock
+│   │   ├── routes/                   # HTTP endpoints and request schemas
+│   │   │   ├── chat.py
+│   │   │   ├── health.py
+│   │   │   └── schemas/chat.py
+│   │   ├── services/
+│   │   │   ├── rag_service.py        # embed, retrieve, generate
+│   │   │   ├── caching_service.py    # Redis semantic cache
+│   │   │   └── guardrails_service.py # masks sensitive input
+│   │   ├── helpers/                  # config, prompt building, utils
+│   │   ├── metrics.py                # Prometheus metrics
+│   │   └── main.py                   # app + lifespan wiring
+│   ├── tests/                        # routes/, services/, helpers/
+│   └── pyproject.toml
+├── data_pipeline/                    # Prefect flows
+│   ├── data_pipeline/
+│   │   ├── parse/                    # extract text from source files
+│   │   ├── vectorize/                # chunk, embed, write to Qdrant, reindex
+│   │   ├── helpers/                  # config, utils
+│   │   ├── data_ingestion_pipeline.py
+│   │   └── deploy.py
+│   ├── tests/
+│   └── pyproject.toml
+├── shared/                           # code used by both packages
+│   ├── shared/
+│   │   ├── llm/                      # LLM and embedding clients
+│   │   ├── prompts/                  # Langfuse prompt manager
+│   │   ├── vectordb/                 # vector DB interface + Qdrant provider
+│   │   └── config.py
+│   ├── tests/                        # llm/, vectordb/
+│   └── pyproject.toml
+├── docker/
+│   ├── docker-compose.yml            # all services
+│   ├── api/Dockerfile
+│   ├── data_pipeline/Dockerfile
+│   ├── env/                          # .env.example.* templates
+│   ├── litellm_proxy/config.yml      # LiteLLM model list
+│   ├── nginx/default.conf
+│   ├── prometheus/prometheus.yml
+│   └── README.md                     # Docker stack guide
+├── docs/imgs/architecture.png        # architecture diagram
+├── loadtests/locustfile.py           # Locust load test
+├── .github/workflows/                # GitHub Actions CI
+├── .pre-commit-config.yaml
+├── pyproject.toml                    # workspace root
+├── uv.lock
+└── README.md
 ```
 
 ## Monorepo design
@@ -66,7 +93,7 @@ The project is one repository with three packages, split by responsibility:
 ```
         api ───────┐
                    ├──► shared
- data_pipeline ────┘
+ data_pipeline ────┘g
 ```
 
 **Why separate the data pipeline from the API?**
