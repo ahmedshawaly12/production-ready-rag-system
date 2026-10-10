@@ -8,6 +8,7 @@ from shared.prompts.prompt_manager import PromptManager
 from shared.vectordb.vectordb_provider_facotry import VectorDBProviderFactory
 
 from api.helpers.config import get_settings
+from api.metrics import setup_metrics
 from api.routes.chat import chat_route
 from api.routes.health import health_route
 from api.services.caching_service import SemanticCacheService
@@ -66,6 +67,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+setup_metrics(app)
 
 app.include_router(health_route)
 app.include_router(chat_route)
