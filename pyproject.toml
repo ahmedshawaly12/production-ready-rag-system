@@ -22,6 +22,7 @@ dev = [
     "pytest-cov",
     "pytest-mock",
     "httpx",
+    "locust>=2.46.7",
 ]
 
 [tool.pytest.ini_options]

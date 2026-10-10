@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+POST,chat total [failed],"RuntimeError('{""detail"": ""Generation returned no content""}')",62,2026-10-10T00:07:19Z,2026-10-10T00:09:49Z
