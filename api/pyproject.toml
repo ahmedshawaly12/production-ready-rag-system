@@ -9,6 +9,9 @@ dependencies = [
     "redisvl>=0.27.2",
     "langfuse>=4.17.0",
     "pydantic-settings>=2.15.0",
+    "prometheus-client>=0.26.0",
+    "starlette-exporter>=0.24.0",
+    "fastapi-health>=0.4.0",
 ]
 
 [build-system]
