@@ -11,8 +11,6 @@ services:
         networks:
           - backend
         restart: unless-stopped
-        env_file:
-          - ./env/.env.app
         healthcheck:
             test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
             interval: 30s
