@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        run: uv sync --all-packages --dev
+
+      - name: Detect changed packages
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'api/**'
+            shared:
+              - 'shared/**'
+            data_pipeline:
+              - 'data_pipeline/**'
+            root:
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/ci.yml'
+
+      - name: Run API tests
+        if: steps.changes.outputs.api == 'true' || steps.changes.outputs.shared == 'true' || steps.changes.outputs.root == 'true'
+        run: uv run pytest api/tests -v
+
+      - name: Run shared tests
+        if: steps.changes.outputs.shared == 'true' || steps.changes.outputs.root == 'true'
+        run: uv run pytest shared/tests -v
+
+      - name: Run data pipeline tests
+        if: steps.changes.outputs.data_pipeline == 'true' || steps.changes.outputs.shared == 'true' || steps.changes.outputs.root == 'true'
+        run: uv run pytest data_pipeline/tests -v
