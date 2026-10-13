@@ -22,6 +22,13 @@ dev = [
     "pytest-cov",
     "pytest-mock",
     "httpx",
+    "locust>=2.46.7",
+]
+eval = [
+    "langchain-community==0.3.31",
+    "langchain-openai>=1.7.1",
+    "pillow>=12.3.0",
+    "ragas>=0.3.1",
 ]
 
 [tool.pytest.ini_options]

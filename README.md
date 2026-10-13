@@ -28,6 +28,7 @@ It is a Python monorepo with a streaming chat API, a document ingestion pipeline
 
 This is a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) with three packages.
 
+
 ```
 .
 ├── api/                              # FastAPI app: /chat and /health
