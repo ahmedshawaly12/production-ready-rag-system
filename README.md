@@ -187,6 +187,7 @@ for f in .env.example.*; do cp -n "$f" "${f/.example/}"; done   # then edit the 
 cd ..
 docker compose up -d --build
 docker compose ps
+docker compose exec -w /app/data_pipeline worker uv run python -m data_pipeline.deploy
 curl http://localhost/api/v1/health      # {"status":"healthy"}
 ```
 

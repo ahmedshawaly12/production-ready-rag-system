@@ -56,7 +56,6 @@ Open each `.env.*` file and fill in your values (API keys, passwords).
 
 | File | What to set |
 |---|---|
-| `.env.app` | Settings of the `fastapi` container: API settings **and** Shared settings (vector DB, embedding model). Use service names as hosts (`redis`, `qdrant`, `litellm`). |
 | `.env.litellm` | `COHERE_API_KEY`, `GROQ_API_KEY` |
 | `.env.grafana` | Grafana admin user and password |
 | worker env file(s) | Settings of the `worker` container: data pipeline settings (MinIO credentials, `bucket_name`, chunking, collection) **and** the same Shared settings as `.env.app`. See the `env_file` of the `worker` service in `docker-compose.yml`. |
@@ -71,6 +70,8 @@ Every variable, with its meaning, the values that must match across files, and t
 ```bash
 cd ..
 docker compose up -d --build
+docker compose exec -w /app/data_pipeline worker uv run python -m data_pipeline.deploy
+
 ```
 
 **4. Check that it works:**
