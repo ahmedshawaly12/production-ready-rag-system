@@ -30,7 +30,7 @@ async def extract_pages(client: BaseClient, bucket: str, key: str):
 
 
 @task(
-    name="index_into_vectordb", retries=3, retry_delay_seconds=5, cache_policy=NO_CACHE
+    name="index_into_vectordb", retries=2, retry_delay_seconds=5, cache_policy=NO_CACHE
 )
 async def index_into_vectordb(
     vector_db_provider,
