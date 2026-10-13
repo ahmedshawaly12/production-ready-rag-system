@@ -11,6 +11,15 @@ class LLMInterface(ABC):
         pass
 
     @abstractmethod
+    def stream_generate_text(
+        self,
+        messages: list[dict],
+        max_output_tokens: int | None = None,
+        temperature: float | None = None,
+    ):
+        pass
+
+    @abstractmethod
     def generate_text(
         self,
         prompt: str,
