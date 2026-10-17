@@ -62,7 +62,7 @@ async def index_into_vectordb(
 
     logger.info(f"Inserting {len(record_ids)} vectors into {collection_name}")
 
-    await vector_db_provider.insert_many(
+    ok = await vector_db_provider.insert_many(
         collection_name=collection_name,
         texts=texts,
         vectors=vectors,
@@ -70,6 +70,8 @@ async def index_into_vectordb(
         record_ids=record_ids,
         batch_size=400,
     )
+    if not ok:
+        raise RuntimeError(f"Vector insert failed for collection {collection_name}")
 
     logger.info(
         f"Successfully indexed {len(record_ids)} chunks into '{collection_name}'"
