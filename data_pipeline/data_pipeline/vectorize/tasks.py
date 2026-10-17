@@ -54,8 +54,10 @@ async def index_into_vectordb(
     logger.info(f"Generating embeddingds for {len(texts)} chuncks")
 
     vectors = await embedding_model.embed_text(texts)
+
     record_ids = [
-        f"page_{c['metadata']['page']}_id_{c['metadata']['chunck_id']}" for c in chuncks
+        f"{c['metadata']['doc_id']}:page_{c['metadata']['page']}:chunk_{c['metadata']['chunck_id']}"
+        for c in chuncks
     ]
 
     logger.info(f"Inserting {len(record_ids)} vectors into {collection_name}")
