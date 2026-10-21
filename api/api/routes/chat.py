@@ -23,8 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 NO_CONTEXT_ANSWER = (
-    "The provided nutrition content does not contain enough information "
-    "to answer the question."
+    "The provided documents does not contain enough information to answer the question."
 )
 
 

@@ -19,9 +19,7 @@ class ReindexFlowConfigsSchema(BaseModel):
     extracted_text_dest_path: str = "extracted"
     failed_index_files_dest_path: str = "failed_index"
     do_reset: bool = True
-    collection_name: str = Field(
-        default_factory=lambda: get_settings().default_collection_name
-    )
+    collection_name: str = Field(min_length=4)
 
 
 @flow(name="reindex-pipeline", log_prints=False)

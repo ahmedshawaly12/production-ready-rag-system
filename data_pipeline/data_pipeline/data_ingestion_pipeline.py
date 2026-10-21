@@ -38,54 +38,45 @@ async def process_file(
     logger = get_run_logger()
 
     logger.info(f"======== Processing file: {key} ========")
-    try:
-        # 1- extract text
-        pages = await extract_text(client, bucket, key, file_allowed_types)
-        if not pages:
-            # logger.warning(
-            #     f"No extracted content for {key}. Moving file to unprocessed."
-            # )
-            await move_file(client, bucket, key, configs.unprocessed_files_dest_path)
-            return None
 
-        logger.info(f"Extracted {len(pages)} page(s) from {key}")
+    # 1- extract text
+    pages = await extract_text(client, bucket, key, file_allowed_types)
+    if not pages:
+        # logger.warning(
+        #     f"No extracted content for {key}. Moving file to unprocessed."
+        # )
+        await move_file(client, bucket, key, configs.unprocessed_files_dest_path)
+        return None
 
-        # 2- save extracted text
-        extracted_key = await save_extracted_text(
-            client,
-            bucket,
-            key,
-            pages,
-            destination_path=configs.extracted_text_dest_path,
-        )
+    logger.info(f"Extracted {len(pages)} page(s) from {key}")
 
-        # 3- chunck pages
-        chuncks = await chunck_pages(pages, key)
+    # 2- save extracted text
+    extracted_key = await save_extracted_text(
+        client,
+        bucket,
+        key,
+        pages,
+        destination_path=configs.extracted_text_dest_path,
+    )
 
-        if not chuncks:
-            logger.warning(
-                f"No chunks generated for {key}. Moving file to unprocessed."
-            )
-            await move_file(client, bucket, key, configs.unprocessed_files_dest_path)
-            return None
+    # 3- chunck pages
+    chuncks = await chunck_pages(pages, key)
 
-        # 4- Generate embedding + index into vectordb
-        await index_into_vectordb(vectordb_client, configs.collection_name, chuncks)
+    if not chuncks:
+        logger.warning(f"No chunks generated for {key}. Moving file to unprocessed.")
+        await move_file(client, bucket, key, configs.unprocessed_files_dest_path)
+        return None
 
-        # 5- move the file to processed
-        await move_file(client, bucket, key, configs.processed_files_dest_path)
+    # 4- Generate embedding + index into vectordb
+    await index_into_vectordb(vectordb_client, configs.collection_name, chuncks)
 
-        logger.info(
-            f"=== File processed successfully: key={key} | pages={len(pages)} | chunks={len(chuncks)} ==="
-        )
-        return extracted_key
+    # 5- move the file to processed
+    await move_file(client, bucket, key, configs.processed_files_dest_path)
 
-    except Exception:
-        logger.exception(f"=== Failed to process file: {key} ===")
-        try:
-            await move_file(client, bucket, key, configs.unprocessed_files_dest_path)
-        except Exception:
-            logger.exception(f"Failed to move {key} to unprocessed")
+    logger.info(
+        f"=== File processed successfully: key={key} | pages={len(pages)} | chunks={len(chuncks)} ==="
+    )
+    return extracted_key
 
 
 @flow(name="rag-data-ingestion-pipeline", log_prints=False)
@@ -119,40 +110,49 @@ async def rag_data_ingestion_flow(configs: PipelineConfigsSchema):
     logger.info(f"Starting processing of {len(files)} file(s)")
 
     # 2- process files
-    results = []
+    results, failed = [], []
+    try:
+        for key in files:
+            try:
+                result = await process_file(
+                    s3_client,
+                    configs.bucket,
+                    key,
+                    vectordb_client,
+                    file_allowed_types,
+                    configs,
+                )
+                results.append(result)
+            except Exception:
+                logger.exception(
+                    f"=== Failed to process file after all retries: {key} ==="
+                )
+                failed.append(key)
+                results.append(None)
+                try:
+                    await move_file(
+                        s3_client,
+                        configs.bucket,
+                        key,
+                        configs.unprocessed_files_dest_path,
+                    )
+                except Exception:
+                    logger.exception(f"Failed to move {key} to unprocessed")
 
-    for key in files:
-        result = await process_file(
-            s3_client,
-            configs.bucket,
-            key,
-            vectordb_client,
-            file_allowed_types,
-            configs,
-        )
-        results.append(result)
-    # futures = [
-    #     process_file.submit(
-    #         s3_client,
-    #         configs.bucket,
-    #         key,
-    #         vectordb_client,
-    #         file_allowed_types,
-    #         configs,
-    #     )
-    #     for key in files
-    # ]
-    # results = [f.result() for f in futures]
+    finally:
+        await vectordb_client.disconnect()
 
     # 3- summary
     successful = sum(result is not None for result in results)
 
-    await vectordb_client.disconnect()
-
     logger.info("========== Pipeline completed ==========")
-    logger.info(f"Total files: {len(files)}")
-    logger.info(f"Successfully processed: {successful}")
-    logger.info(f"Skipped: {len(files) - successful}")
+    logger.info(
+        f"Total: {len(files)} | OK: {successful} | "
+        f"Failed: {len(failed)} | Skipped: {len(files) - successful - len(failed)}"
+    )
+
+    if failed:
+        raise RuntimeError(f"{len(failed)} file(s) failed ingestion: {failed}")
 
     return results
 

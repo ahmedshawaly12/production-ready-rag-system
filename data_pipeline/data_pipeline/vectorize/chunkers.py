@@ -1,3 +1,5 @@
+import hashlib
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from prefect import task
 from prefect.logging import get_run_logger
@@ -14,6 +16,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 @task(name="chunck_pages", retries=3, retry_delay_seconds=5)
 async def chunck_pages(pages: list[dict], source: str) -> list[dict]:
     logger = get_run_logger()
+    doc_id = hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
 
     chuncks = []
 
@@ -36,6 +39,7 @@ async def chunck_pages(pages: list[dict], source: str) -> list[dict]:
                     "text": chunck_text,
                     "metadata": {
                         "source": source,
+                        "doc_id": doc_id,
                         "page": page_number,
                         "chunck_id": chunck_index,
                     },

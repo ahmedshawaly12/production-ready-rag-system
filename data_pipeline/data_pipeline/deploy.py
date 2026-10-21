@@ -19,7 +19,7 @@ async def create_deployment():
         parameters={
             "configs": {
                 "bucket": settings.bucket_name,
-                "collection_name": settings.default_collection_name,
+                # "collection_name": settings.default_collection_name,
                 "raw_documents_path": "raw",
                 "extracted_text_dest_path": "extracted",
                 "processed_files_dest_path": "processed",

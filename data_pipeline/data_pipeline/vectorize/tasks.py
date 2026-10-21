@@ -30,7 +30,7 @@ async def extract_pages(client: BaseClient, bucket: str, key: str):
 
 
 @task(
-    name="index_into_vectordb", retries=3, retry_delay_seconds=5, cache_policy=NO_CACHE
+    name="index_into_vectordb", retries=2, retry_delay_seconds=5, cache_policy=NO_CACHE
 )
 async def index_into_vectordb(
     vector_db_provider,
@@ -54,13 +54,15 @@ async def index_into_vectordb(
     logger.info(f"Generating embeddingds for {len(texts)} chuncks")
 
     vectors = await embedding_model.embed_text(texts)
+
     record_ids = [
-        f"page_{c['metadata']['page']}_id_{c['metadata']['chunck_id']}" for c in chuncks
+        f"{c['metadata']['doc_id']}:page_{c['metadata']['page']}:chunk_{c['metadata']['chunck_id']}"
+        for c in chuncks
     ]
 
     logger.info(f"Inserting {len(record_ids)} vectors into {collection_name}")
 
-    await vector_db_provider.insert_many(
+    ok = await vector_db_provider.insert_many(
         collection_name=collection_name,
         texts=texts,
         vectors=vectors,
@@ -68,6 +70,8 @@ async def index_into_vectordb(
         record_ids=record_ids,
         batch_size=400,
     )
+    if not ok:
+        raise RuntimeError(f"Vector insert failed for collection {collection_name}")
 
     logger.info(
         f"Successfully indexed {len(record_ids)} chunks into '{collection_name}'"
